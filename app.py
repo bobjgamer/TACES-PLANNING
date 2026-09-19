@@ -1,19 +1,37 @@
 import streamlit as st
 import pandas as pd
 import streamlit_authenticator as stauth
+import bcrypt
 from tax_engine import optimize_family_taxes, analyze_rrsp_scenario
 from excel_export import generate_excel_model
 
 st.set_page_config(page_title="Family Tax Planner", layout="wide")
 
-# Simple Dev Authentication
+# Dynamically hash the password to guarantee it works flawlessly
+hashed_password = bcrypt.hashpw("brrtaces2026".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+credentials = {
+    "usernames": {
+        "brrtaces": {
+            "email": "brrtaces@local.com",
+            "name": "Brr Taces",
+            "password": hashed_password
+        }
+    }
+}
+
+# Initialize Authenticator for v0.4.x
 authenticator = stauth.Authenticate(
-    {"usernames": {"admin": {"email": "admin@local.com", "name": "Admin", "password": "$2b$12$Kj.zH7.5.3k40R.9r8w9f.1.y6W2R.x6wW/46R0l9.Q8D6g2E4MOC"}}}, # Password: "password"
-    "cookie_name", "cookie_key", 30
+    credentials,
+    "tax_planner_cookie", 
+    "cookie_signature_key", 
+    30
 )
 
-# FIXED: streamlit-authenticator API change
-name, auth_status, username = authenticator.login(location="main")
+# In v0.4.x, login() returns None and relies on session_state
+authenticator.login(location="main")
+
+auth_status = st.session_state.get("authentication_status")
 
 if auth_status:
     authenticator.logout(location="sidebar")
@@ -109,3 +127,8 @@ if auth_status:
         if st.button("Generate Excel File"):
             excel = generate_excel_model(d)
             st.download_button(label="Download Model", data=excel, file_name="Tax_Plan.xlsx")
+
+elif auth_status is False:
+    st.error("Username/password is incorrect")
+elif auth_status is None:
+    st.warning("Please enter your username and password")
