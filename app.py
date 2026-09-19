@@ -12,10 +12,11 @@ authenticator = stauth.Authenticate(
     "cookie_name", "cookie_key", 30
 )
 
-name, auth_status, username = authenticator.login("Login", "main")
+# FIXED: streamlit-authenticator API change
+name, auth_status, username = authenticator.login(location="main")
 
 if auth_status:
-    authenticator.logout("Logout", "sidebar")
+    authenticator.logout(location="sidebar")
     
     page = st.sidebar.radio("Navigation", [
         "Dashboard", "Family Inputs", "Registered Accounts", "Scenarios", "Export Model"
